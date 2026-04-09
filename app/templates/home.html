@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRF API | Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+    <header class="bg-slate-800 text-white shadow-md">
+        <nav class="container mx-auto px-6 py-4 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-500 p-2 rounded-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <span class="text-xl font-bold tracking-tight">DRF Explorer</span>
+            </div>
+            
+            <div class="space-x-6 mt-4 sm:mt-0">
+                <a href="{% url 'category-list' %}" class="hover:text-blue-400 transition-colors duration-200 font-medium">Categories</a>
+                <a href="{% url 'product-list' %}" class="hover:text-blue-400 transition-colors duration-200 font-medium">Products</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <div class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+            <h1 class="text-4xl font-extrabold text-slate-800 mb-4">
+                Welcome to the API
+            </h1>
+            <p class="text-gray-600 mb-8 leading-relaxed">
+                This is the central entry point for the Product Catalog API. Use the navigation above or the links below to explore the data structures and endpoints.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a href="{% url 'category-list' %}" class="block p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-all group">
+                    <h3 class="font-bold text-blue-600 group-hover:text-blue-700">Browse Categories &rarr;</h3>
+                    <p class="text-sm text-gray-500">View and manage all product classifications.</p>
+                </a>
+                <a href="{% url 'product-list' %}" class="block p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-all group">
+                    <h3 class="font-bold text-blue-600 group-hover:text-blue-700">Browse Products &rarr;</h3>
+                    <p class="text-sm text-gray-500">Access the full list of available inventory items.</p>
+                </a>
+            </div>
+        </div>
+    </main>
+    
+</body>
+</html>
