@@ -1,29 +1,52 @@
 import { NavLink } from "react-router-dom";
 
 const navItemClass = ({ isActive }) =>
-  `block rounded-lg px-3 py-2 text-sm font-medium transition ${
-    isActive
-      ? "bg-cyan-500 text-slate-900"
-      : "text-slate-200 hover:bg-slate-700 hover:text-white"
-  }`;
+    `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${isActive
+        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+        : "text-gray-400 hover:bg-white/5 hover:text-gray-100"
+    }`;
 
 export default function AdminSidebar() {
-  return (
-    <aside className="min-h-[calc(100vh-73px)] w-72 border-r border-slate-700 bg-slate-800 p-4">
-      <p className="mb-4 px-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-        Admin Navigation
-      </p>
-      <nav className="space-y-2">
-        <NavLink to="/admin" end className={navItemClass}>
-          Dashboard
-        </NavLink>
-        <NavLink to="/admin/categories" className={navItemClass}>
-          Categories
-        </NavLink>
-        <NavLink to="/admin/products" className={navItemClass}>
-          Products
-        </NavLink>
-      </nav>
-    </aside>
-  );
+    return (
+        <aside className="sticky top-16 h-[calc(100vh-64px)] w-72 border-r border-gray-800 bg-[#0F172A] p-6">
+            <div className="mb-8 px-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+                    Management
+                </p>
+            </div>
+
+            <nav className="space-y-1.5">
+                <NavLink to="/admin" end className={navItemClass}>
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Dashboard
+                </NavLink>
+
+                <NavLink to="/admin/categories" className={navItemClass}>
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                    Categories
+                </NavLink>
+
+                <NavLink to="/admin/products" className={navItemClass}>
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    Products
+                </NavLink>
+            </nav>
+
+            {/* Optional: Bottom Profile/Settings section for UX */}
+            <div className="absolute bottom-6 left-6 right-6 border-t border-gray-800 pt-6">
+                <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-400 hover:bg-red-500/10 hover:text-red-500 transition-all">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+    );
 }
