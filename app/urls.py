@@ -3,6 +3,8 @@ from .views import *
 
 urlpatterns = [
     path("", home),
+    
+    path("login/", login),
 
     # CATEGORY
     path("categories/", category_list),

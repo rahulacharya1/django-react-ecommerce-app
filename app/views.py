@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from .models import Category, Product
-from .serializers import CategorySerializer, ProductSerializer
+from .serializers import CategorySerializer, LoginSerializer, ProductSerializer
 
 
 def home(request):
@@ -30,6 +30,7 @@ def category_list(request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def category_detail(request, id):
     category = Category.objects.get(id=id)
     serializer = CategorySerializer(category)
@@ -37,6 +38,7 @@ def category_detail(request, id):
 
 
 @api_view(['PUT'])
+@permission_classes([IsAdminUser])
 def update_category(request, id):
     category = Category.objects.get(id=id)
     serializer = CategorySerializer(category, data=request.data, partial=True)
@@ -47,6 +49,7 @@ def update_category(request, id):
 
 
 @api_view(['DELETE'])
+@permission_classes([IsAdminUser])
 def delete_category(request, id):
     category = Category.objects.get(id=id)
     category.delete()
@@ -73,6 +76,7 @@ def product_list(request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def product_detail(request, id):
     product = Product.objects.get(id=id)
     serializer = ProductSerializer(product, context={'request': request})
@@ -80,6 +84,7 @@ def product_detail(request, id):
 
 
 @api_view(['PUT'])
+@permission_classes([IsAdminUser])
 def update_product(request, id):
     product = Product.objects.get(id=id)
     serializer = ProductSerializer(product, data=request.data, partial=True, context={'request': request})
@@ -90,8 +95,20 @@ def update_product(request, id):
 
 
 @api_view(['DELETE'])
+@permission_classes([IsAdminUser])
 def delete_product(request, id):
     product = Product.objects.get(id=id)
     product.delete()
     return Response({'message': 'Product deleted successfully'})
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login(request):
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        username = serializer.validated_data['username']
+        password = serializer.validated_data['password']
+        # Implement your authentication logic here
+        return Response({'message': 'Login successful'})
+    return Response(serializer.errors, status=400)
 

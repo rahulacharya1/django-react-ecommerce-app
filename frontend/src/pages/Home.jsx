@@ -49,7 +49,6 @@ export default function Home() {
                         <h2 className="text-xl font-semibold text-gray-900 tracking-tight">
                             Browse Categories
                         </h2>
-                        <button className="text-gray-400 hover:text-indigo-600 font-medium text-sm transition-colors">View All →</button>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
