@@ -52,7 +52,7 @@ export default function AddProduct() {
         try {
             setLoading(true);
             setError("");
-            await API.post("products/", formData);
+            await API.post("products/create/", formData);
             navigate("/admin/products", { replace: true });
         } catch (err) {
             setError(err.response?.data?.detail || "Failed to add product. Check your connection.");

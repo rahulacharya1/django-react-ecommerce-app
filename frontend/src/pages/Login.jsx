@@ -10,7 +10,7 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     useEffect(() => {
         if (token) {
@@ -30,17 +30,20 @@ export default function Login() {
 
             const res = await API.post("login/", form);
 
-            localStorage.setItem("token", res.data.token);
-            localStorage.setItem("username", form.username);
-            localStorage.setItem("is_staff", "true");
+            if (!res.data?.is_staff) {
+                setError("Admin access required.");
+                return;
+            }
+
+            sessionStorage.setItem("token", res.data.token);
+            sessionStorage.setItem("username", res.data.username || form.username);
+            sessionStorage.setItem("is_staff", String(res.data.is_staff));
 
             navigate("/admin", { replace: true });
 
-            window.location.reload();
-
         } catch (err) {
             console.error("Login error:", err);
-            setError("Invalid username or password.");
+            setError(err.response?.data?.detail || "Invalid username or password.");
         } finally {
             setLoading(false);
         }

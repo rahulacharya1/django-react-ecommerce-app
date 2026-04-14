@@ -2,8 +2,9 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function Header() {
     const navigate = useNavigate();
-    const token = localStorage.getItem("token");
-    const username = localStorage.getItem("username") || "Admin";
+    const token = sessionStorage.getItem("token");
+    const isStaff = sessionStorage.getItem("is_staff") === "true";
+    const username = sessionStorage.getItem("username") || "Admin";
 
     return (
         <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-md">
@@ -31,7 +32,7 @@ export default function Header() {
                                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">0</span>
                             </Link>
                         </li>
-                        {token ? (
+                        {token && isStaff ? (
                             // Show this if LOGGED IN
                             <li className="flex items-center gap-6">
                                 <div className="flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">

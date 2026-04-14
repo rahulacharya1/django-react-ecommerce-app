@@ -4,35 +4,33 @@ from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from .models import Category, Product
 from .serializers import CategorySerializer, LoginSerializer, ProductSerializer
-
-
-def home(request):
-    return render(request, 'home.html')
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+from django.shortcuts import get_object_or_404
 
 
 # ================= CATEGORY ================= #
 
-@api_view(['GET', 'POST'])
+@api_view(['GET'])
 @permission_classes([AllowAny])
 def category_list(request):
+    categories = Category.objects.all()
+    serializer = CategorySerializer(categories, many=True)
+    return Response(serializer.data)
 
-    if request.method == 'GET':
-        categories = Category.objects.all()
-        serializer = CategorySerializer(categories, many=True)
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def create_category(request):
+    serializer = CategorySerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
         return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = CategorySerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=400)
-
+    return Response(serializer.errors, status=400)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def category_detail(request, id):
-    category = Category.objects.get(id=id)
+    category = get_object_or_404(Category, id=id)
     serializer = CategorySerializer(category)
     return Response(serializer.data)
 
@@ -40,7 +38,7 @@ def category_detail(request, id):
 @api_view(['PUT'])
 @permission_classes([IsAdminUser])
 def update_category(request, id):
-    category = Category.objects.get(id=id)
+    category = get_object_or_404(Category, id=id)
     serializer = CategorySerializer(category, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
@@ -51,34 +49,33 @@ def update_category(request, id):
 @api_view(['DELETE'])
 @permission_classes([IsAdminUser])
 def delete_category(request, id):
-    category = Category.objects.get(id=id)
+    category = get_object_or_404(Category, id=id)
     category.delete()
     return Response({'message': 'Category deleted successfully'})
 
 
 # ================= PRODUCT ================= #
 
-@api_view(['GET', 'POST'])
+@api_view(['GET'])
 @permission_classes([AllowAny])
 def product_list(request):
+    products = Product.objects.all()
+    serializer = ProductSerializer(products, many=True, context={'request': request})
+    return Response(serializer.data)
 
-    if request.method == 'GET':
-        products = Product.objects.all()
-        serializer = ProductSerializer(products, many=True, context={'request': request})
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def create_product(request):
+    serializer = ProductSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        serializer.save()
         return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = ProductSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=400)
-
+    return Response(serializer.errors, status=400)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def product_detail(request, id):
-    product = Product.objects.get(id=id)
+    product = get_object_or_404(Product, id=id)
     serializer = ProductSerializer(product, context={'request': request})
     return Response(serializer.data)
 
@@ -86,7 +83,7 @@ def product_detail(request, id):
 @api_view(['PUT'])
 @permission_classes([IsAdminUser])
 def update_product(request, id):
-    product = Product.objects.get(id=id)
+    product = get_object_or_404(Product, id=id)
     serializer = ProductSerializer(product, data=request.data, partial=True, context={'request': request})
     if serializer.is_valid():
         serializer.save()
@@ -97,7 +94,7 @@ def update_product(request, id):
 @api_view(['DELETE'])
 @permission_classes([IsAdminUser])
 def delete_product(request, id):
-    product = Product.objects.get(id=id)
+    product = get_object_or_404(Product, id=id)
     product.delete()
     return Response({'message': 'Product deleted successfully'})
 
@@ -105,10 +102,19 @@ def delete_product(request, id):
 @permission_classes([AllowAny])
 def login(request):
     serializer = LoginSerializer(data=request.data)
-    if serializer.is_valid():
-        username = serializer.validated_data['username']
-        password = serializer.validated_data['password']
-        # Implement your authentication logic here
-        return Response({'message': 'Login successful'})
-    return Response(serializer.errors, status=400)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=400)
+
+    username = serializer.validated_data['username']
+    password = serializer.validated_data['password']
+    user = authenticate(username=username, password=password)
+
+    if not user:
+        return Response({'detail': 'Invalid username or password.'}, status=400)
+
+    if not user.is_staff:
+        return Response({'detail': 'Admin access required.'}, status=403)
+
+    token, created = Token.objects.get_or_create(user=user)
+    return Response({'token': token.key, 'username': user.username, 'is_staff': user.is_staff})
 

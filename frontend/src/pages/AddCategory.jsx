@@ -25,7 +25,7 @@ export default function AddCategory() {
         try {
             setLoading(true);
             setError("");
-            await API.post("categories/", form);
+            await API.post("categories/create/", form);
             navigate("/admin/categories", { replace: true });
         } catch (err) {
             console.error("Error:", err.response?.data);
