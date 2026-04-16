@@ -106,6 +106,10 @@ export default function Home() {
                                             {p.name}
                                         </h3>
 
+                                        <p className="mb-2 text-sm text-gray-500 flex-grow">
+                                            {p.description.length > 60 ? p.description.slice(0, 57) + "..." : p.description}
+                                        </p>
+
                                         <div className="mb-4 mt-auto">
                                             {p.discount_price ? (
                                                 <div className="flex items-center gap-2">

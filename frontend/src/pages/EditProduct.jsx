@@ -165,16 +165,26 @@ export default function EditProduct() {
                                 />
                             </div>
                             <div>
-                                <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Category</label>
-                                <select
-                                    name="category"
-                                    value={form.category}
+                                <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Discounted Price (₹)</label>
+                                <input
+                                    type="number"
+                                    name="discount_price"
+                                    value={form.discount_price}
                                     onChange={handleChange}
                                     className="w-full rounded-2xl border border-gray-100 bg-gray-50/50 p-4 font-medium text-gray-900 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
-                                >
-                                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
+                                />
                             </div>
+                        </div>
+                        <div>
+                            <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Category</label>
+                            <select
+                                name="category"
+                                value={form.category}
+                                onChange={handleChange}
+                                className="w-full rounded-2xl border border-gray-100 bg-gray-50/50 p-4 font-medium text-gray-900 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                            >
+                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
                         </div>
                     </div>
 

@@ -111,7 +111,10 @@ export default function ManageProducts() {
 
                                         {/* Price */}
                                         <td className="px-8 py-6 text-center">
-                                            <span className="font-bold text-gray-900 tracking-tight">₹{p.price}</span>
+                                            <span className="font-bold text-gray-900 tracking-tight">₹{p.discount_price}</span>
+                                            {p.price > p.discount_price && (
+                                                <span className="ml-2 text-sm text-gray-500 line-through">₹{p.price}</span>
+                                            )}
                                         </td>
 
                                         {/* Action Buttons */}
