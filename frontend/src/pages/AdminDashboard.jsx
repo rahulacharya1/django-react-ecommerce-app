@@ -26,7 +26,7 @@ export default function AdminDashboard() {
             {/* Header Section */}
             <div className="flex flex-col gap-1">
                 <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
-                    Good Morning, <span className="text-gray-400 font-normal text-2xl">Admin</span>
+                    Hello, <span className="text-gray-400 font-normal text-2xl">Admin</span>
                 </h1>
                 <p className="text-gray-500 font-medium">Here's a snapshot of your store's inventory.</p>
             </div>

@@ -12,7 +12,16 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = [host.strip() for host in os.environ.get("ALLOWED_HOSTS", "").split(",") if host]
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "api.mystore.acharyaworks.in"
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "https://mystore.acharyaworks.in"
+]
 
 
 # Application definition
