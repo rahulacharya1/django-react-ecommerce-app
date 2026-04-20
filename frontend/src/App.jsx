@@ -11,6 +11,8 @@ import AdminLayout from "./layouts/AdminLayout";
 import ProductView from "./pages/ProductView";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Cart from "./pages/Cart";
 
 function LegacyEditCategoryRedirect() {
     const { id } = useParams();
@@ -28,7 +30,9 @@ function App() {
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/product/:id" element={<ProductView />} />
+                <Route path="/cart" element={<Cart />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
                 <Route element={<ProtectedRoute />}>
                     <Route path="/admin" element={<AdminLayout />}>
                         <Route index element={<AdminDashboard />} />

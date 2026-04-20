@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import API from "../services/api";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -14,7 +14,9 @@ export default function Login() {
 
     useEffect(() => {
         if (token) {
-            navigate("/admin", { replace: true });
+            // If already logged in, redirect based on user type
+            const isStaff = sessionStorage.getItem("is_staff") === "true";
+            navigate(isStaff ? "/admin" : "/", { replace: true });
         }
     }, [token, navigate]);
 
@@ -30,22 +32,29 @@ export default function Login() {
 
             const res = await API.post("login/", form);
 
-            if (!res.data?.is_staff) {
-                setError("Admin access required.");
-                return;
-            }
-
+            // Save authentication data
             sessionStorage.setItem("token", res.data.token);
-            sessionStorage.setItem("username", res.data.username || form.username);
+            sessionStorage.setItem("username", res.data.username);
             sessionStorage.setItem("is_staff", String(res.data.is_staff));
 
-            navigate("/admin", { replace: true });
+            // Redirect based on user type
+            if (res.data.is_staff) {
+                navigate("/admin", { replace: true });
+            } else {
+                navigate("/", { replace: true });
+            }
 
         } catch (err) {
             console.error("Login error:", err);
-            setError(err.response?.data?.detail || "Invalid username or password.");
+            setError(err.response?.data?.error || "Invalid username or password.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter") {
+            handleLogin();
         }
     };
 
@@ -58,7 +67,7 @@ export default function Login() {
                     <div className="mb-8 text-center">
                         <h2 className="text-3xl font-semibold tracking-tight text-gray-900">Sign In</h2>
                         <p className="mt-2 text-sm text-gray-500 font-medium">
-                            Access your store's administrative panel.
+                            Welcome back! Sign in to your account.
                         </p>
                     </div>
 
@@ -76,6 +85,7 @@ export default function Login() {
                                 className="w-full rounded-2xl border border-gray-100 bg-gray-50/50 p-4 font-medium text-gray-900 outline-none transition-all focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500"
                                 value={form.username}
                                 onChange={(e) => setForm({ ...form, username: e.target.value })}
+                                onKeyPress={handleKeyPress}
                             />
                         </div>
 
@@ -86,6 +96,7 @@ export default function Login() {
                                 className="w-full rounded-2xl border border-gray-100 bg-gray-50/50 p-4 font-medium text-gray-900 outline-none transition-all focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500"
                                 value={form.password}
                                 onChange={(e) => setForm({ ...form, password: e.target.value })}
+                                onKeyPress={handleKeyPress}
                             />
                         </div>
 
@@ -97,6 +108,18 @@ export default function Login() {
                             {loading ? "Authenticating..." : "Sign In"}
                         </button>
                     </div>
+
+                    <div className="mt-6 text-center text-sm">
+                        <p className="text-gray-600">
+                            Don't have an account?{" "}
+                            <Link
+                                to="/signup"
+                                className="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                            >
+                                Sign Up
+                            </Link>
+                        </p>
+                    </div>
                 </div>
             </main>
 
@@ -104,3 +127,4 @@ export default function Login() {
         </div>
     );
 }
+

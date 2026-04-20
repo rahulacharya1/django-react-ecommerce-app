@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import API from "../services/api";
 
 const navItemClass = ({ isActive }) =>
     `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${isActive
@@ -9,11 +10,21 @@ const navItemClass = ({ isActive }) =>
 export default function AdminSidebar() {
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        sessionStorage.removeItem("token");
-        sessionStorage.removeItem("username");
-        sessionStorage.removeItem("is_staff");
-        navigate("/login", { replace: true });
+    const handleLogout = async () => {
+        try {
+            await API.post("logout/");
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("username");
+            sessionStorage.removeItem("is_staff");
+            navigate("/", { replace: true });
+        } catch (err) {
+            console.error("Logout error:", err);
+            // Clear session anyway
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("username");
+            sessionStorage.removeItem("is_staff");
+            navigate("/", { replace: true });
+        }
     };
 
     return (

@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from .models import Category, Product
-from .serializers import CategorySerializer, LoginSerializer, ProductSerializer
+from .serializers import *
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from django.shortcuts import get_object_or_404
@@ -98,23 +98,50 @@ def delete_product(request, id):
     product.delete()
     return Response({'message': 'Product deleted successfully'})
 
+
+# ================= AUTH ================= #
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def signup(request):
+    serializer = SignupSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'username': user.username,
+            'email': user.email,
+            'is_staff': user.is_staff,
+            'message': 'Account created successfully'
+        }, status=201)
+    return Response(serializer.errors, status=400)
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login(request):
     serializer = LoginSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=400)
+    if serializer.is_valid():
+        username = serializer.validated_data['username']
+        password = serializer.validated_data['password']
+        user = authenticate(username=username, password=password)
+        if user:
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({
+                'token': token.key,
+                'username': user.username,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'message': 'Login successful'
+            }, status=200)
+        return Response({'error': 'Invalid credentials'}, status=400)
+    return Response(serializer.errors, status=400)
 
-    username = serializer.validated_data['username']
-    password = serializer.validated_data['password']
-    user = authenticate(username=username, password=password)
 
-    if not user:
-        return Response({'detail': 'Invalid username or password.'}, status=400)
-
-    if not user.is_staff:
-        return Response({'detail': 'Admin access required.'}, status=403)
-
-    token, created = Token.objects.get_or_create(user=user)
-    return Response({'token': token.key, 'username': user.username, 'is_staff': user.is_staff})
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout(request):
+    request.user.auth_token.delete()
+    return Response({'message': 'Logged out successfully'}) 
 
