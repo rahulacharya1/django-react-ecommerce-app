@@ -5,6 +5,9 @@ urlpatterns = [
     path("signup/", signup),
     path("login/", login),
     path("logout/", logout),
+    path("profile/", profile),
+    path("profile/change-password/", change_password),
+    path("users/", users_list),
 
     # CATEGORY
     path("categories/", category_list),
@@ -19,5 +22,12 @@ urlpatterns = [
     path("products/<int:id>/", product_detail),
     path("products/<int:id>/update/", update_product),
     path("products/<int:id>/delete/", delete_product),
+
+    # CART
+    path("cart/", cart_list),
+    path("cart/count/", cart_count),
+    path("cart/add/", cart_add),
+    path("cart/<int:id>/update/", cart_update),
+    path("cart/<int:id>/delete/", cart_delete),
 ]
 

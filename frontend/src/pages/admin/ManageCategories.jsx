@@ -1,22 +1,49 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../services/api";
+import API from "../../services/api";
 
 export default function ManageCategories() {
     const navigate = useNavigate();
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState({ type: "", text: "" });
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const itemsPerPage = 6;
+
+    const [totalCount, setTotalCount] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
     const fetchData = () => {
         setLoading(true);
-        API.get("categories/")
-            .then(res => setData(res.data))
+        API.get("categories/", {
+            params: {
+                page: currentPage,
+                page_size: itemsPerPage,
+                search: searchTerm,
+            },
+        })
+            .then(res => {
+                const payload = res.data || {};
+                setData(payload.results || []);
+                setTotalCount(Number(payload.count || 0));
+                setTotalPages(Number(payload.total_pages || 1));
+                if (payload.current_page && payload.current_page !== currentPage) {
+                    setCurrentPage(payload.current_page);
+                }
+            })
             .catch(() => setStatus({ type: "error", text: "Failed to load categories." }))
             .finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        fetchData();
+    }, [currentPage, searchTerm]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     const deleteCategory = (id) => {
         if (window.confirm("Are you sure you want to delete this category?")) {
@@ -59,6 +86,19 @@ export default function ManageCategories() {
 
             {/* Table Container */}
             <div className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md">
+                <div className="flex flex-col gap-4 border-b border-gray-100 bg-gray-50/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-sm font-medium text-gray-500">
+                        Showing {totalCount} categories
+                    </div>
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search category by name or description"
+                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 sm:w-80"
+                    />
+                </div>
+
                 {loading ? (
                     <div className="p-20 flex flex-col items-center gap-4">
                         <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-indigo-600" />
@@ -69,7 +109,7 @@ export default function ManageCategories() {
                         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 text-gray-300">
                             <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                         </div>
-                        <p className="text-gray-500 font-medium">No categories found yet.</p>
+                        <p className="text-gray-500 font-medium">No matching categories found.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -119,6 +159,30 @@ export default function ManageCategories() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {!loading && totalCount > 0 && (
+                    <div className="flex items-center justify-between border-t border-gray-100 px-6 py-4">
+                        <p className="text-sm text-gray-500">
+                            Page {currentPage} of {Math.max(1, totalPages)}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                                className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                                className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

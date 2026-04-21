@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
-import API from "../services/api";
+import API from "../../services/api";
 
 export default function AdminDashboard() {
-    const [totals, setTotals] = useState({ categories: 0, products: 0 });
+    const [totals, setTotals] = useState({ categories: 0, products: 0, users: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
-        Promise.all([API.get("categories/"), API.get("products/")])
-            .then(([categoriesRes, productsRes]) => {
+        Promise.all([API.get("categories/"), API.get("products/"), API.get("users/")])
+            .then(([categoriesRes, productsRes, usersRes]) => {
                 setTotals({
                     categories: categoriesRes.data.length,
                     products: productsRes.data.length,
+                    users: usersRes.data.length,
                 });
                 setLoading(false);
             })
@@ -41,7 +42,7 @@ export default function AdminDashboard() {
             )}
 
             {/* Stats Grid */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-3">
                 {/* Categories Card */}
                 <div className="group rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm transition-all hover:shadow-md hover:border-indigo-100">
                     <div className="flex items-center justify-between mb-4">
@@ -78,6 +79,25 @@ export default function AdminDashboard() {
                             <div className="h-12 w-16 animate-pulse rounded-lg bg-gray-100" />
                         ) : (
                             totals.products
+                        )}
+                    </h2>
+                </div>
+
+                <div className="group rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm transition-all hover:shadow-md hover:border-indigo-100">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="rounded-2xl bg-indigo-50 p-3 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5V4H2v16h5m10 0v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2m12 0H7m10-10a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </div>
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Accounts</span>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-500">Total Users</p>
+                    <h2 className="mt-2 text-5xl font-bold tracking-tight text-gray-900">
+                        {loading ? (
+                            <div className="h-12 w-16 animate-pulse rounded-lg bg-gray-100" />
+                        ) : (
+                            totals.users
                         )}
                     </h2>
                 </div>

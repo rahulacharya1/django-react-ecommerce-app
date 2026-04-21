@@ -8,40 +8,70 @@ export default function Cart() {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
-    // Mock data for initial UI build - Replace with your API logic
-    useEffect(() => {
-        const fetchCart = async () => {
-            setLoading(true);
-            try {
-                // const res = await API.get("cart/");
-                // setCartItems(res.data);
+    const emitCartCount = (items) => {
+        const count = (items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+        window.dispatchEvent(new CustomEvent("cart-updated", { detail: { count } }));
+    };
 
-                // TEMPORARY: Mock data to see the UI
-                setCartItems([
-                    { id: 1, name: "Minimalist Leather Watch", price: 1200, quantity: 1, image: "https://via.placeholder.com/150" },
-                    { id: 2, name: "Premium Canvas Backpack", price: 2500, quantity: 1, image: "https://via.placeholder.com/150" }
-                ]);
-            } catch (err) {
-                console.error("Cart fetch error:", err);
-            } finally {
-                setLoading(false);
+    const fetchCart = async () => {
+        setLoading(true);
+        setError("");
+        try {
+            const res = await API.get("cart/");
+            const items = res.data || [];
+            setCartItems(items);
+            emitCartCount(items);
+        } catch (err) {
+            console.error("Cart fetch error:", err);
+            if (err?.response?.status === 401) {
+                navigate("/login", { replace: true });
+                return;
             }
-        };
+            setError("Unable to load cart.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchCart();
     }, []);
 
-    const updateQuantity = (id, delta) => {
-        setCartItems(prev => prev.map(item =>
-            item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
-        ));
+    const updateQuantity = async (id, delta) => {
+        const target = cartItems.find((item) => item.id === id);
+        if (!target) return;
+
+        const nextQuantity = Math.max(1, Number(target.quantity) + delta);
+        try {
+            const res = await API.patch(`cart/${id}/update/`, { quantity: nextQuantity });
+            setCartItems((prev) => {
+                const updated = prev.map((item) => (item.id === id ? res.data : item));
+                emitCartCount(updated);
+                return updated;
+            });
+        } catch (err) {
+            console.error("Cart update error:", err);
+            setError("Unable to update quantity.");
+        }
     };
 
-    const removeItem = (id) => {
-        setCartItems(prev => prev.filter(item => item.id !== id));
+    const removeItem = async (id) => {
+        try {
+            await API.delete(`cart/${id}/delete/`);
+            setCartItems((prev) => {
+                const updated = prev.filter((item) => item.id !== id);
+                emitCartCount(updated);
+                return updated;
+            });
+        } catch (err) {
+            console.error("Cart remove error:", err);
+            setError("Unable to remove item.");
+        }
     };
 
-    const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const subtotal = cartItems.reduce((acc, item) => acc + (Number(item.price) * Number(item.quantity)), 0);
     const shipping = subtotal > 5000 ? 0 : 150;
     const total = subtotal + shipping;
 
@@ -53,6 +83,12 @@ export default function Cart() {
 
             <div className="mx-auto max-w-7xl px-6 py-12">
                 <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-10">Your Shopping Cart</h1>
+
+                {error && (
+                    <div className="mb-6 rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
+                        {error}
+                    </div>
+                )}
 
                 {cartItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-[2.5rem] bg-white p-20 shadow-sm border border-gray-100">
@@ -73,7 +109,11 @@ export default function Cart() {
                         <div className="lg:col-span-2 space-y-6">
                             {cartItems.map((item) => (
                                 <div key={item.id} className="flex flex-col sm:flex-row items-center gap-6 rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm transition-all hover:shadow-md">
-                                    <img src={item.image} alt={item.name} className="h-32 w-32 rounded-2xl object-cover border border-gray-50" />
+                                    <img
+                                        src={item.image || "https://via.placeholder.com/150"}
+                                        alt={item.name}
+                                        className="h-32 w-32 rounded-2xl object-cover border border-gray-50"
+                                    />
 
                                     <div className="flex-1 text-center sm:text-left">
                                         <h3 className="text-lg font-bold text-gray-900">{item.name}</h3>
@@ -92,7 +132,7 @@ export default function Cart() {
                                     </div>
 
                                     <div className="hidden sm:block text-right">
-                                        <p className="text-lg font-bold text-gray-900">₹{item.price * item.quantity}</p>
+                                        <p className="text-lg font-bold text-gray-900">₹{Number(item.price) * Number(item.quantity)}</p>
                                     </div>
                                 </div>
                             ))}

@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import API from "../services/api";
+import { useNavigate, useParams } from "react-router-dom";
+import API from "../../services/api";
 
-export default function AddProduct() {
+export default function EditProduct() {
     const navigate = useNavigate();
+    const { id } = useParams();
     const [categories, setCategories] = useState([]);
     const [imagePreview, setImagePreview] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
     const [form, setForm] = useState({
         name: "",
         description: "",
@@ -16,10 +15,30 @@ export default function AddProduct() {
         category: "",
         image: null,
     });
+    const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        API.get("categories/").then(res => setCategories(res.data));
-    }, []);
+        Promise.all([API.get(`products/${id}/`), API.get("categories/")])
+            .then(([productRes, categoriesRes]) => {
+                setForm({
+                    name: productRes.data.name,
+                    description: productRes.data.description,
+                    price: productRes.data.price,
+                    discount_price: productRes.data.discount_price || "",
+                    category: productRes.data.category,
+                    image: null,
+                });
+                setImagePreview(productRes.data.image);
+                setCategories(categoriesRes.data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Error fetching data:", err);
+                navigate("/admin/products", { replace: true });
+            });
+    }, [id, navigate]);
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
@@ -30,8 +49,6 @@ export default function AddProduct() {
                 const reader = new FileReader();
                 reader.onloadend = () => setImagePreview(reader.result);
                 reader.readAsDataURL(file);
-            } else {
-                setImagePreview(null);
             }
         } else {
             setForm({ ...form, [name]: value });
@@ -39,35 +56,46 @@ export default function AddProduct() {
     };
 
     const handleSubmit = async () => {
-        if (!form.name || !form.description || !form.price || !form.category || !form.image) {
-            setError("Please fill all required fields and upload an image.");
+        if (!form.name || !form.description || !form.price || !form.category) {
+            setError("Please fill all required fields.");
             return;
         }
 
         const formData = new FormData();
         Object.keys(form).forEach(key => {
-            if (form[key]) formData.append(key, form[key]);
+            if (form[key] !== null && form[key] !== "") {
+                formData.append(key, form[key]);
+            }
         });
 
         try {
-            setLoading(true);
+            setUpdating(true);
             setError("");
-            await API.post("products/create/", formData);
+            await API.put(`products/${id}/update/`, formData);
             navigate("/admin/products", { replace: true });
         } catch (err) {
-            setError(err.response?.data?.detail || "Failed to add product. Check your connection.");
+            setError(err.response?.data?.detail || "Failed to update product.");
         } finally {
-            setLoading(false);
+            setUpdating(false);
         }
     };
+
+    if (loading) {
+        return (
+            <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-indigo-600" />
+                <p className="text-gray-400 font-medium font-inter">Syncing product details...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col items-center justify-center py-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="w-full max-w-3xl space-y-8">
                 {/* Header */}
                 <div className="text-center">
-                    <h2 className="text-3xl font-semibold tracking-tight text-gray-900">Add New Product</h2>
-                    <p className="text-gray-500 mt-2">Fill in the details to list a new item in your store.</p>
+                    <h2 className="text-3xl font-semibold tracking-tight text-gray-900">Edit Product</h2>
+                    <p className="text-gray-500 mt-2">Update information for <span className="text-indigo-600 font-semibold">"{form.name}"</span></p>
                 </div>
 
                 <div className="rounded-[2.5rem] border border-gray-100 bg-white p-8 md:p-12 shadow-sm">
@@ -81,43 +109,32 @@ export default function AddProduct() {
                     )}
 
                     <div className="space-y-6">
-                        {/* Image Upload Area */}
-                        <div className="group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-8 transition-all hover:border-indigo-400 hover:bg-white">
-                            {imagePreview ? (
-                                <div className="relative h-40 w-40 overflow-hidden rounded-2xl shadow-md">
-                                    <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
-                                    <button
-                                        onClick={() => { setImagePreview(null); setForm({ ...form, image: null }) }}
-                                        className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white shadow-sm hover:bg-red-600"
-                                    >
-                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="text-center">
-                                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-gray-400 shadow-sm transition-colors group-hover:text-indigo-600">
-                                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-                                    </div>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Upload Product Image</p>
-                                </div>
-                            )}
-                            <input
-                                type="file"
-                                name="image"
-                                onChange={handleChange}
-                                accept="image/*"
-                                className="absolute inset-0 cursor-pointer opacity-0"
-                            />
+                        {/* Image Preview & Upload */}
+                        <div className="flex flex-col items-center gap-6 pb-6 border-b border-gray-50">
+                            <div className="relative h-48 w-48 overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 shadow-inner">
+                                <img
+                                    src={imagePreview}
+                                    alt="Product"
+                                    className="h-full w-full object-cover"
+                                    onError={(e) => { e.target.src = "https://via.placeholder.com/200?text=None"; }}
+                                />
+                            </div>
+                            <div className="text-center">
+                                <label className="cursor-pointer rounded-xl bg-gray-900 px-4 py-2 text-xs font-bold uppercase tracking-widest text-white transition-all hover:bg-indigo-600">
+                                    Change Image
+                                    <input type="file" name="image" onChange={handleChange} accept="image/*" className="hidden" />
+                                </label>
+                                <p className="mt-2 text-[10px] font-medium text-gray-400">Leave blank to keep the current file</p>
+                            </div>
                         </div>
 
-                        {/* Basic Info */}
+                        {/* Form Fields */}
                         <div className="grid gap-6">
                             <div>
-                                <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Product Name</label>
+                                <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Product Name *</label>
                                 <input
                                     type="text"
                                     name="name"
-                                    placeholder="e.g. Minimalist Leather Watch"
                                     value={form.name}
                                     onChange={handleChange}
                                     className="w-full rounded-2xl border border-gray-100 bg-gray-50/50 p-4 font-medium text-gray-900 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
@@ -125,10 +142,9 @@ export default function AddProduct() {
                             </div>
 
                             <div>
-                                <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Description</label>
+                                <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Description *</label>
                                 <textarea
                                     name="description"
-                                    placeholder="Describe the features and materials..."
                                     value={form.description}
                                     onChange={handleChange}
                                     rows="3"
@@ -137,10 +153,9 @@ export default function AddProduct() {
                             </div>
                         </div>
 
-                        {/* Pricing & Category Grid */}
                         <div className="grid gap-6 md:grid-cols-2">
                             <div>
-                                <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Base Price (₹)</label>
+                                <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Price (₹)</label>
                                 <input
                                     type="number"
                                     name="price"
@@ -160,16 +175,14 @@ export default function AddProduct() {
                                 />
                             </div>
                         </div>
-
                         <div>
                             <label className="mb-2 ml-1 block text-xs font-bold uppercase tracking-widest text-gray-400">Category</label>
                             <select
                                 name="category"
                                 value={form.category}
                                 onChange={handleChange}
-                                className="w-full appearance-none rounded-2xl border border-gray-100 bg-gray-50/50 p-4 font-medium text-gray-900 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                                className="w-full rounded-2xl border border-gray-100 bg-gray-50/50 p-4 font-medium text-gray-900 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
                             >
-                                <option value="">Select Category</option>
                                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>
@@ -179,10 +192,10 @@ export default function AddProduct() {
                     <div className="mt-10 flex flex-col gap-4 border-t border-gray-50 pt-8 sm:flex-row">
                         <button
                             onClick={handleSubmit}
-                            disabled={loading}
+                            disabled={updating}
                             className="flex-1 rounded-2xl bg-indigo-600 px-8 py-4 text-sm font-bold text-white transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-50 shadow-lg shadow-indigo-100"
                         >
-                            {loading ? "Adding Product..." : "Add Product"}
+                            {updating ? "Saving Changes..." : "Save Changes"}
                         </button>
                         <button
                             onClick={() => navigate("/admin/products")}

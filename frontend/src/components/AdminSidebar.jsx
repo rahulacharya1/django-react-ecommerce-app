@@ -56,6 +56,15 @@ export default function AdminSidebar() {
                     </svg>
                     Products
                 </NavLink>
+
+                <NavLink to="/admin/users" className={navItemClass}>
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5V4H2v16h5m10 0v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2m12 0H7m10-10a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Users
+                </NavLink>
+
+                
             </nav>
 
             <div className="absolute bottom-6 left-6 right-6 border-t border-gray-800 pt-6">

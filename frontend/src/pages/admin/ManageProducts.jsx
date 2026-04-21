@@ -1,22 +1,60 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../services/api";
+import API from "../../services/api";
 
 export default function ManageProducts() {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState({ type: "", text: "" });
+    const [searchTerm, setSearchTerm] = useState("");
+    const [categoryFilter, setCategoryFilter] = useState("all");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [categoryOptions, setCategoryOptions] = useState([]);
+
+    const itemsPerPage = 6;
 
     const fetchData = () => {
         setLoading(true);
-        API.get("products/")
-            .then(res => setProducts(res.data))
+        API.get("products/", {
+            params: {
+                page: currentPage,
+                page_size: itemsPerPage,
+                search: searchTerm,
+                category_name: categoryFilter,
+            },
+        })
+            .then(res => {
+                const payload = res.data || {};
+                setProducts(payload.results || []);
+                setTotalCount(Number(payload.count || 0));
+                setTotalPages(Number(payload.total_pages || 1));
+                if (payload.current_page && payload.current_page !== currentPage) {
+                    setCurrentPage(payload.current_page);
+                }
+            })
             .catch(() => setStatus({ type: "error", text: "Failed to load products." }))
             .finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        API.get("categories/")
+            .then((res) => {
+                const list = Array.isArray(res.data) ? res.data : [];
+                setCategoryOptions(list.map((c) => c.name));
+            })
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [currentPage, searchTerm, categoryFilter]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, categoryFilter]);
 
     const handleDelete = (id) => {
         if (window.confirm("Are you sure you want to delete this product?")) {
@@ -59,6 +97,29 @@ export default function ManageProducts() {
 
             {/* Table Container */}
             <div className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md">
+                <div className="flex flex-col gap-3 border-b border-gray-100 bg-gray-50/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-sm font-medium text-gray-500">Showing {totalCount} products</div>
+                    <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search product"
+                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 sm:w-64"
+                        />
+                        <select
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                        >
+                            <option value="all">All Categories</option>
+                            {categoryOptions.map((category) => (
+                                <option key={category} value={category}>{category}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
                 {loading ? (
                     <div className="p-20 flex flex-col items-center gap-4">
                         <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-indigo-600" />
@@ -66,7 +127,7 @@ export default function ManageProducts() {
                     </div>
                 ) : products.length === 0 ? (
                     <div className="p-20 text-center text-gray-500">
-                        No products found. Start by adding one above.
+                        No matching products found.
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -142,6 +203,30 @@ export default function ManageProducts() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {!loading && totalCount > 0 && (
+                    <div className="flex items-center justify-between border-t border-gray-100 px-6 py-4">
+                        <p className="text-sm text-gray-500">
+                            Page {currentPage} of {Math.max(1, totalPages)}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                                className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                                className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import API from "../services/api";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 export default function ProductView() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [product, setProduct] = useState(null);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState("");
+    const [isInCart, setIsInCart] = useState(false);
 
     useEffect(() => {
         Promise.all([API.get(`products/${id}/`), API.get("categories/")])
@@ -21,32 +23,62 @@ export default function ProductView() {
             .finally(() => setLoading(false));
     }, [id]);
 
+    useEffect(() => {
+        const token = sessionStorage.getItem("token");
+        if (!token || !id) {
+            setIsInCart(false);
+            return;
+        }
+
+        const checkCartForCurrentProduct = async () => {
+            try {
+                const res = await API.get("cart/");
+                const items = Array.isArray(res.data) ? res.data : [];
+                const found = items.some((item) => String(item.product_id) === String(id));
+                setIsInCart(found);
+            } catch {
+                setIsInCart(false);
+            }
+        };
+
+        checkCartForCurrentProduct();
+    }, [id]);
+
     const displayCategoryName = product
         ? categories.find((c) => String(c.id) === String(product.category))?.name ||
         product.category_name ||
         "Uncategorized"
         : "Uncategorized";
 
-    const addToCart = () => {
+    const addToCart = async (goToCart = false) => {
         if (!product) return;
-        const existing = JSON.parse(localStorage.getItem("cart") || "[]");
-        const found = existing.find((item) => item.id === product.id);
 
-        if (found) {
-            found.qty += 1;
-        } else {
-            existing.push({
-                id: product.id,
-                name: product.name,
-                price: product.discount_price || product.price,
-                image: product.image,
-                qty: 1,
-            });
+        const token = sessionStorage.getItem("token");
+        if (!token) {
+            navigate("/login");
+            return;
         }
 
-        localStorage.setItem("cart", JSON.stringify(existing));
-        setStatus("Added to cart successfully.");
-        setTimeout(() => setStatus(""), 3000); // Clear status after 3s
+        try {
+            await API.post("cart/add/", {
+                product_id: product.id,
+                quantity: 1,
+            });
+
+            setIsInCart(true);
+            window.dispatchEvent(new CustomEvent("cart-updated"));
+
+            if (goToCart) {
+                navigate("/cart");
+                return;
+            }
+
+            setStatus("Added to cart successfully.");
+            setTimeout(() => setStatus(""), 3000);
+        } catch (error) {
+            setStatus("Unable to add item to cart.");
+            setTimeout(() => setStatus(""), 3000);
+        }
     };
 
     return (
@@ -116,12 +148,13 @@ export default function ProductView() {
                                 {/* Action Buttons */}
                                 <div className="flex flex-col gap-4 sm:flex-row">
                                     <button
-                                        onClick={addToCart}
-                                        className="flex-1 rounded-2xl bg-gray-900 px-8 py-5 text-sm font-bold text-white transition-all hover:bg-gray-800 active:scale-95 shadow-lg shadow-gray-200"
+                                        onClick={() => (isInCart ? navigate("/cart") : addToCart(true))}
+                                        className={`flex-1 rounded-2xl px-8 py-5 text-sm font-bold text-white transition-all active:scale-95 shadow-lg ${isInCart ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200" : "bg-gray-900 hover:bg-gray-800 shadow-gray-200"}`}
                                     >
-                                        Add to Cart
+                                        {isInCart ? "Added to Cart" : "Add to Cart"}
                                     </button>
                                     <button
+                                        onClick={() => addToCart(true)}
                                         className="flex-1 rounded-2xl border-2 border-gray-900 px-8 py-5 text-sm font-bold text-gray-900 transition-all hover:bg-gray-50 active:scale-95"
                                     >
                                         Buy It Now

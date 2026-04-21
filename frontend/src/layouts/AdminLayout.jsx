@@ -13,7 +13,7 @@ export default function AdminLayout() {
                 <AdminSidebar />
 
                 {/* Main Content Area */}
-                <main className="flex-1 min-w-0 overflow-y-auto px-8 py-10 lg:px-12">
+                <main className="flex-1 min-w-0 px-8 py-10 lg:px-12">
                     <div className="mx-auto max-w-6xl">
                         {/* The Outlet renders the specific admin page (Dashboard, Products, etc.) */}
                         <Outlet />

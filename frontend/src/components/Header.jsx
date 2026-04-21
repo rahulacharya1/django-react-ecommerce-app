@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 export default function Header() {
     const navigate = useNavigate();
     const [showDropdown, setShowDropdown] = useState(false);
+    const [cartCount, setCartCount] = useState(0);
     const dropdownRef = useRef(null);
 
     // Get auth data from sessionStorage
@@ -23,6 +24,35 @@ export default function Header() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    const fetchCartCount = async () => {
+        if (!token) {
+            setCartCount(0);
+            return;
+        }
+
+        try {
+            const res = await API.get("cart/count/");
+            setCartCount(Number(res.data?.count || 0));
+        } catch (err) {
+            setCartCount(0);
+        }
+    };
+
+    useEffect(() => {
+        fetchCartCount();
+
+        const onCartUpdated = (event) => {
+            if (typeof event?.detail?.count !== "undefined") {
+                setCartCount(Number(event.detail.count || 0));
+            } else {
+                fetchCartCount();
+            }
+        };
+
+        window.addEventListener("cart-updated", onCartUpdated);
+        return () => window.removeEventListener("cart-updated", onCartUpdated);
+    }, [token]);
+
     const handleLogout = async () => {
         try {
             await API.post("logout/");
@@ -30,6 +60,7 @@ export default function Header() {
             console.error("Logout error:", err);
         } finally {
             sessionStorage.clear();
+            setCartCount(0);
             navigate("/", { replace: true });
             setShowDropdown(false);
         }
@@ -64,7 +95,9 @@ export default function Header() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                                 <span className="hidden md:inline">Cart</span>
-                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">0</span>
+                                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold text-white">
+                                    {cartCount > 99 ? "99+" : cartCount}
+                                </span>
                             </Link>
                         </li>
 
@@ -83,6 +116,17 @@ export default function Header() {
 
                                 {showDropdown && (
                                     <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-2xl border border-gray-100 bg-white p-2 shadow-xl ring-1 ring-black ring-opacity-5 animate-in fade-in zoom-in duration-200">
+                                        <Link
+                                            to="/profile"
+                                            onClick={() => setShowDropdown(false)}
+                                            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
+                                        >
+                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9.001 9.001 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            My Profile
+                                        </Link>
+
                                         {isStaff && (
                                             <Link
                                                 to="/admin"

@@ -1,18 +1,20 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from "react-router-dom";
 import Home from "./pages/Home";
-import AdminDashboard from "./pages/AdminDashboard";
-import ManageCategories from "./pages/ManageCategories";
-import ManageProducts from "./pages/ManageProducts";
-import AddCategory from "./pages/AddCategory";
-import EditCategory from "./pages/EditCategory";
-import AddProduct from "./pages/AddProduct";
-import EditProduct from "./pages/EditProduct";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import ManageCategories from "./pages/admin/ManageCategories";
+import ManageProducts from "./pages/admin/ManageProducts";
+import ManageUsers from "./pages/admin/ManageUsers";
+import AddCategory from "./pages/admin/AddCategory";
+import EditCategory from "./pages/admin/EditCategory";
+import AddProduct from "./pages/admin/AddProduct";
+import EditProduct from "./pages/admin/EditProduct";
 import AdminLayout from "./layouts/AdminLayout";
 import ProductView from "./pages/ProductView";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Cart from "./pages/Cart";
+import Profile from "./pages/Profile";
 
 function LegacyEditCategoryRedirect() {
     const { id } = useParams();
@@ -31,6 +33,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/product/:id" element={<ProductView />} />
                 <Route path="/cart" element={<Cart />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route element={<ProtectedRoute />}>
@@ -40,6 +43,7 @@ function App() {
                         <Route path="categories/add" element={<AddCategory />} />
                         <Route path="categories/:id/edit" element={<EditCategory />} />
                         <Route path="products" element={<ManageProducts />} />
+                        <Route path="users" element={<ManageUsers />} />
                         <Route path="products/add" element={<AddProduct />} />
                         <Route path="products/:id/edit" element={<EditProduct />} />
                     </Route>
