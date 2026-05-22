@@ -26,8 +26,8 @@ export default function Profile() {
     const [passwordMessage, setPasswordMessage] = useState("");
 
     useEffect(() => {
-        const token = sessionStorage.getItem("token");
-        if (!token) {
+        const username = sessionStorage.getItem("username");
+        if (!username) {
             navigate("/login", { replace: true });
             return;
         }

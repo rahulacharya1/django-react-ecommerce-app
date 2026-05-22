@@ -17,13 +17,13 @@ export default function Signup() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const token = sessionStorage.getItem("token");
+    const username = sessionStorage.getItem("username");
 
     useEffect(() => {
-        if (token) {
+        if (username) {
             navigate("/", { replace: true });
         }
-    }, [token, navigate]);
+    }, [username, navigate]);
 
     const handleSignup = async () => {
         // Validation
@@ -56,7 +56,6 @@ export default function Signup() {
             });
 
             // Save authentication data
-            sessionStorage.setItem("token", res.data.token);
             sessionStorage.setItem("username", res.data.username);
             sessionStorage.setItem("is_staff", String(res.data.is_staff));
 

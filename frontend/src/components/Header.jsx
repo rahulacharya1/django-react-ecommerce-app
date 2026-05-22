@@ -9,9 +9,9 @@ export default function Header() {
     const dropdownRef = useRef(null);
 
     // Get auth data from sessionStorage
-    const token = sessionStorage.getItem("token");
+    const username = sessionStorage.getItem("username");
     const isStaff = sessionStorage.getItem("is_staff") === "true";
-    const username = sessionStorage.getItem("username") || "User";
+    const displayName = username || "User";
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -25,7 +25,7 @@ export default function Header() {
     }, []);
 
     const fetchCartCount = async () => {
-        if (!token) {
+        if (!username) {
             setCartCount(0);
             return;
         }
@@ -51,7 +51,7 @@ export default function Header() {
 
         window.addEventListener("cart-updated", onCartUpdated);
         return () => window.removeEventListener("cart-updated", onCartUpdated);
-    }, [token]);
+    }, [username]);
 
     const handleLogout = async () => {
         try {
@@ -88,7 +88,7 @@ export default function Header() {
                         <li>
                             {/* THE CHANGE: If token exists, go to cart. If not, go to login */}
                             <Link 
-                                to={token ? "/cart" : "/login"} 
+                                to={username ? "/cart" : "/login"} 
                                 className="relative flex items-center gap-2 rounded-xl p-2 transition-colors hover:bg-gray-50 hover:text-indigo-600"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -101,14 +101,14 @@ export default function Header() {
                             </Link>
                         </li>
 
-                        {token ? (
+                        {username ? (
                             <li className="relative" ref={dropdownRef}>
                                 <button
                                     onClick={() => setShowDropdown(!showDropdown)}
                                     className="flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-2 text-indigo-700 transition-all hover:bg-indigo-100 active:scale-95"
                                 >
                                     <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
-                                    <span className="text-xs font-bold uppercase tracking-wider">{username}</span>
+                                    <span className="text-xs font-bold uppercase tracking-wider">{displayName}</span>
                                     <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                     </svg>

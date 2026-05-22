@@ -10,15 +10,24 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const token = sessionStorage.getItem("token");
+    const username = sessionStorage.getItem("username");
 
     useEffect(() => {
-        if (token) {
-            // If already logged in, redirect based on user type
-            const isStaff = sessionStorage.getItem("is_staff") === "true";
-            navigate(isStaff ? "/admin" : "/", { replace: true });
+        if (!username) {
+            return;
         }
-    }, [token, navigate]);
+
+        const validateSession = async () => {
+            try {
+                const profileRes = await API.get("profile/");
+                navigate(profileRes.data?.is_staff ? "/admin" : "/", { replace: true });
+            } catch (error) {
+                sessionStorage.clear();
+            }
+        };
+
+        validateSession();
+    }, [username, navigate]);
 
     const handleLogin = async () => {
         if (!form.username || !form.password) {
@@ -33,7 +42,6 @@ export default function Login() {
             const res = await API.post("login/", form);
 
             // Save authentication data
-            sessionStorage.setItem("token", res.data.token);
             sessionStorage.setItem("username", res.data.username);
             sessionStorage.setItem("is_staff", String(res.data.is_staff));
 

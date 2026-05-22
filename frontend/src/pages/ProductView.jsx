@@ -24,8 +24,8 @@ export default function ProductView() {
     }, [id]);
 
     useEffect(() => {
-        const token = sessionStorage.getItem("token");
-        if (!token || !id) {
+        const username = sessionStorage.getItem("username");
+        if (!username || !id) {
             setIsInCart(false);
             return;
         }
@@ -53,8 +53,8 @@ export default function ProductView() {
     const addToCart = async (goToCart = false) => {
         if (!product) return;
 
-        const token = sessionStorage.getItem("token");
-        if (!token) {
+        const username = sessionStorage.getItem("username");
+        if (!username) {
             navigate("/login");
             return;
         }

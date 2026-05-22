@@ -1,23 +1,46 @@
 import { useEffect, useState } from "react";
 import API from "../../services/api";
 
+function getTotalCount(payload) {
+    if (Array.isArray(payload)) {
+        return payload.length;
+    }
+
+    if (payload && typeof payload === "object") {
+        if (typeof payload.count === "number") {
+            return payload.count;
+        }
+
+        if (Array.isArray(payload.results)) {
+            return payload.results.length;
+        }
+    }
+
+    return 0;
+}
+
 export default function AdminDashboard() {
     const [totals, setTotals] = useState({ categories: 0, products: 0, users: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
-        Promise.all([API.get("categories/"), API.get("products/"), API.get("users/")])
-            .then(([categoriesRes, productsRes, usersRes]) => {
+        Promise.allSettled([API.get("categories/"), API.get("products/"), API.get("users/")])
+            .then(([categoriesResult, productsResult, usersResult]) => {
                 setTotals({
-                    categories: categoriesRes.data.length,
-                    products: productsRes.data.length,
-                    users: usersRes.data.length,
+                    categories: categoriesResult.status === "fulfilled" ? getTotalCount(categoriesResult.value.data) : 0,
+                    products: productsResult.status === "fulfilled" ? getTotalCount(productsResult.value.data) : 0,
+                    users: usersResult.status === "fulfilled" ? getTotalCount(usersResult.value.data) : 0,
                 });
-                setLoading(false);
+
+                if ([categoriesResult, productsResult, usersResult].some((result) => result.status === "rejected")) {
+                    setError("Failed to load one or more dashboard totals.");
+                }
             })
             .catch(() => {
                 setError("Failed to load dashboard summary.");
+            })
+            .finally(() => {
                 setLoading(false);
             });
     }, []);

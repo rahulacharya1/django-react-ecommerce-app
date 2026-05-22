@@ -4,12 +4,13 @@ from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from .models import Category, Product, CartItem
 from .serializers import *
-from django.contrib.auth import authenticate
-from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate, login as django_login, logout as django_logout, update_session_auth_hash
+from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.db.models import Sum
 from django.db.models import Q
 from django.core.paginator import Paginator, EmptyPage
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 
 def _safe_positive_int(value, default):
@@ -187,9 +188,8 @@ def signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        token, created = Token.objects.get_or_create(user=user)
+        django_login(request, user)
         return Response({
-            'token': token.key,
             'username': user.username,
             'email': user.email,
             'is_staff': user.is_staff,
@@ -207,9 +207,8 @@ def login(request):
         password = serializer.validated_data['password']
         user = authenticate(username=username, password=password)
         if user:
-            token, created = Token.objects.get_or_create(user=user)
+            django_login(request, user)
             return Response({
-                'token': token.key,
                 'username': user.username,
                 'email': user.email,
                 'is_staff': user.is_staff,
@@ -222,7 +221,7 @@ def login(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout(request):
-    request.user.auth_token.delete()
+    django_logout(request)
     return Response({'message': 'Logged out successfully'})
 
 
@@ -265,15 +264,19 @@ def change_password(request):
     if serializer.is_valid():
         request.user.set_password(serializer.validated_data['new_password'])
         request.user.save()
-
-        Token.objects.filter(user=request.user).delete()
-        token = Token.objects.create(user=request.user)
+        update_session_auth_hash(request, request.user)
 
         return Response({
             'message': 'Password updated successfully',
-            'token': token.key,
         })
     return Response(serializer.errors, status=400)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+@ensure_csrf_cookie
+def csrf(request):
+    return Response({'message': 'CSRF cookie set'})
 
 
 @api_view(['GET'])
